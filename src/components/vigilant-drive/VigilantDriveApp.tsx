@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -5,12 +6,13 @@ import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Camera, Play, Square, Settings2, Info, Loader2 } from 'lucide-react';
+import { Camera, Play, Square, Settings2, Info, Loader2, Volume2, ShieldAlert } from 'lucide-react';
 import { MonitoringOverlay } from './MonitoringOverlay';
 import { AlertManager } from './AlertManager';
 import { StatusMonitor } from './StatusMonitor';
 import { realtimeDrowsinessAnalysis, RealtimeDrowsinessAnalysisOutput } from '@/ai/flows/realtime-drowsiness-analysis';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
@@ -98,12 +100,10 @@ export default function VigilantDriveApp() {
       const landmarks = results.faceLandmarks[0];
       setCurrentLandmarks(landmarks);
       
-      // Extract blendshapes for precise blink detection
       const blendshapes = results.faceBlendshapes?.[0]?.categories || [];
       const leftBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkLeft')?.score || 0;
       const rightBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkRight')?.score || 0;
 
-      // Throttle AI analysis flow to ~10 FPS for stability, but use instant data for the UI
       if (timestamp - lastProcessedTime.current > 100) {
         lastProcessedTime.current = timestamp;
         const analysis = await realtimeDrowsinessAnalysis({ 
@@ -154,6 +154,16 @@ export default function VigilantDriveApp() {
           )}
         </div>
       </header>
+
+      {!isCapturing && isInitialized && (
+        <Alert className="bg-primary/5 border-primary/20">
+          <Volume2 className="h-4 w-4" />
+          <AlertTitle className="font-bold">System Check Required</AlertTitle>
+          <AlertDescription>
+            Before driving, please use the <b>TEST ALARM</b> button in the bottom right to ensure your speakers are at maximum volume.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {showSettings && (
         <div className="bg-white rounded-3xl p-8 shadow-2xl border border-primary/5 animate-in slide-in-from-top-4 duration-300">
@@ -216,9 +226,11 @@ export default function VigilantDriveApp() {
           <StatusMonitor data={analysisResult} isCapturing={isCapturing} />
           
           <div className="bg-gradient-to-br from-secondary/10 to-primary/10 rounded-[2rem] p-8 border border-white shadow-sm">
-            <h4 className="font-black text-secondary uppercase tracking-wider text-sm mb-3">Safety Protocol</h4>
+            <h4 className="font-black text-secondary uppercase tracking-wider text-sm mb-3 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4" /> Safety Protocol
+            </h4>
             <p className="text-base text-slate-600 leading-relaxed font-medium">
-              Immediate action: If alert triggers, safely pull over. VigilantDrive utilizes float16 neural networks for maximum precision, but is secondary to driver responsibility.
+              Immediate action: If alert triggers, safely pull over. This system uses a synthetic high-frequency alarm designed to be audible over road noise. Ensure system volume is at 100%.
             </p>
           </div>
         </div>
