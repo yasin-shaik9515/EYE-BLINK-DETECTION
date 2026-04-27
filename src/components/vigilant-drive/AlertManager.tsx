@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -24,7 +23,6 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
   const gainNode = useRef<GainNode | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize Web Audio API
   const initAudio = useCallback(() => {
     if (!audioCtx.current) {
       audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -59,12 +57,11 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
     const ctx = audioCtx.current;
     const gain = gainNode.current;
 
-    // Siren Logic: Oscillating piercing frequencies
     const pulse = () => {
       const osc = ctx.createOscillator();
       const localGain = ctx.createGain();
       
-      osc.type = 'sawtooth'; // Piercing harmonics
+      osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(intensity === 'critical' ? 880 : 440, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(intensity === 'critical' ? 1760 : 880, ctx.currentTime + 0.1);
       
@@ -72,7 +69,7 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
       localGain.connect(gain);
       
       localGain.gain.setValueAtTime(0, ctx.currentTime);
-      localGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.05); // MAX VOLUME
+      localGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.05);
       localGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
       
       osc.start();
@@ -84,7 +81,10 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
   }, [initAudio, stopSound]);
 
   useEffect(() => {
-    if (!isEnabled || muted) {
+    // FORCE STOP logic: Ensure siren stops if system is disabled, muted, face is lost, or user is awake
+    const shouldStop = !isEnabled || muted || alertnessLevel === 'Awake' || warningMessage === 'No face detected.' || warningMessage === 'Face not detected';
+    
+    if (shouldStop) {
       stopSound();
       return;
     }
@@ -98,7 +98,7 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
     }
 
     return () => stopSound();
-  }, [alertnessLevel, isEnabled, muted, playSiren, stopSound]);
+  }, [alertnessLevel, isEnabled, muted, warningMessage, playSiren, stopSound]);
 
   const getAlertColor = () => {
     switch (alertnessLevel) {
@@ -113,13 +113,12 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
 
   return (
     <>
-      {/* Full Screen Visual Alert for Critical Drowsiness */}
-      {alertnessLevel === 'Extremely Drowsy' && isEnabled && (
+      {alertnessLevel === 'Extremely Drowsy' && isEnabled && !muted && (
         <div className="fixed inset-0 z-[100] pointer-events-none border-[20px] border-destructive animate-pulse bg-destructive/20" />
       )}
 
       <div className="fixed bottom-6 right-6 z-[110] flex flex-col gap-4">
-        {(warningMessage && (alertnessLevel !== 'Awake' || warningMessage === 'Face not detected')) && (
+        {(warningMessage && (alertnessLevel !== 'Awake' || warningMessage.includes('not detected'))) && (
           <Card className={cn("w-80 shadow-2xl border-none animate-in slide-in-from-right-full duration-300", getAlertColor(), alertnessLevel === 'Extremely Drowsy' && "alert-pulse")}>
             <CardContent className="p-4 flex items-center gap-3">
               <AlertCircle className={cn("h-8 w-8 shrink-0", alertnessLevel === 'Extremely Drowsy' && "animate-bounce")} />

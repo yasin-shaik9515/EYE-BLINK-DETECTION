@@ -26,6 +26,7 @@ export default function VigilantDriveApp() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const requestRef = useRef<number>(null);
+  const isLooping = useRef<boolean>(false);
   const lastProcessedTime = useRef<number>(0);
   const { toast } = useToast();
 
@@ -63,15 +64,26 @@ export default function VigilantDriveApp() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+      // Mobile-friendly constraints: face front, flexible resolution
+      const constraints = {
+        video: {
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
+          videoRef.current?.play().catch(console.error);
           setIsCapturing(true);
+          isLooping.current = true;
+          requestRef.current = requestAnimationFrame(processFrame);
         };
       }
     } catch (err) {
+      console.error(err);
       toast({
         title: "Camera Access Denied",
         description: "Please allow camera permissions to enable driver monitoring.",
@@ -81,52 +93,68 @@ export default function VigilantDriveApp() {
   };
 
   const stopCamera = () => {
+    isLooping.current = false;
+    if (requestRef.current) cancelAnimationFrame(requestRef.current);
     const stream = videoRef.current?.srcObject as MediaStream;
     stream?.getTracks().forEach(track => track.stop());
     setIsCapturing(false);
     setAnalysisResult(null);
     setCurrentLandmarks(null);
-    if (requestRef.current) cancelAnimationFrame(requestRef.current);
   };
 
   const processFrame = async () => {
-    if (!videoRef.current || !landmarkerRef.current || !isCapturing) return;
+    if (!isLooping.current || !videoRef.current || !landmarkerRef.current) return;
 
     const timestamp = performance.now();
-    const results = landmarkerRef.current.detectForVideo(videoRef.current, timestamp);
+    
+    // Ensure video is actually playing and has data
+    if (videoRef.current.readyState >= 2) {
+      const results = landmarkerRef.current.detectForVideo(videoRef.current, timestamp);
 
-    if (results.faceLandmarks && results.faceLandmarks.length > 0) {
-      const landmarks = results.faceLandmarks[0];
-      setCurrentLandmarks(landmarks);
-      
-      const blendshapes = results.faceBlendshapes?.[0]?.categories || [];
-      const leftBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkLeft')?.score || 0;
-      const rightBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkRight')?.score || 0;
+      if (results.faceLandmarks && results.faceLandmarks.length > 0) {
+        const landmarks = results.faceLandmarks[0];
+        setCurrentLandmarks(landmarks);
+        
+        const blendshapes = results.faceBlendshapes?.[0]?.categories || [];
+        const leftBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkLeft')?.score || 0;
+        const rightBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkRight')?.score || 0;
 
-      if (timestamp - lastProcessedTime.current > 100) {
-        lastProcessedTime.current = timestamp;
-        const analysis = await realtimeDrowsinessAnalysis({ 
-          faceLandmarks: landmarks,
-          blinkScores: { left: leftBlink, right: rightBlink }
-        });
-        setAnalysisResult(analysis);
+        // Throttled server call for analysis
+        if (timestamp - lastProcessedTime.current > 150) {
+          lastProcessedTime.current = timestamp;
+          const analysis = await realtimeDrowsinessAnalysis({ 
+            faceLandmarks: landmarks,
+            blinkScores: { left: leftBlink, right: rightBlink },
+            sensitivity: sensitivity[0]
+          });
+          if (isLooping.current) setAnalysisResult(analysis);
+        }
+      } else {
+        // Face lost - reset state immediately
+        setCurrentLandmarks(null);
+        if (timestamp - lastProcessedTime.current > 150) {
+          setAnalysisResult({ 
+            alertnessLevel: 'Awake', 
+            ear: 0, 
+            headPoseStatus: 'Forward', 
+            warningMessage: 'Face not detected' 
+          });
+          lastProcessedTime.current = timestamp;
+        }
       }
-    } else {
-      setCurrentLandmarks(null);
-      setAnalysisResult(prev => prev ? { ...prev, alertnessLevel: 'Awake', warningMessage: 'Face not detected' } : null);
     }
 
-    requestRef.current = requestAnimationFrame(processFrame);
+    if (isLooping.current) {
+      requestRef.current = requestAnimationFrame(processFrame);
+    }
   };
 
   useEffect(() => {
-    if (isCapturing) {
-      requestRef.current = requestAnimationFrame(processFrame);
-    }
     return () => {
+      isLooping.current = false;
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [isCapturing]);
+  }, []);
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto px-4 py-12 pb-32">
@@ -183,7 +211,7 @@ export default function VigilantDriveApp() {
                 className="py-4"
               />
               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <Info className="h-4 w-4 text-primary" /> Adjusted for variable lighting and driver eyewear.
+                <Info className="h-4 w-4 text-primary" /> Higher sensitivity reacts faster to minor eye closures.
               </p>
             </div>
             <div className="space-y-4">
@@ -191,8 +219,9 @@ export default function VigilantDriveApp() {
               <div className="h-32 bg-slate-950 rounded-2xl p-4 text-[11px] font-mono overflow-y-auto text-emerald-400 border border-emerald-900/30">
                 <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> Core initialized (Delegate: GPU)<br/>
                 {isInitialized && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> FaceMesh: 478_LANDMARKS_ACTIVE<br/></>}
-                {isCapturing && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> Stream: 1280x720_RAW_INPUT<br/></>}
-                {analysisResult && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> Confidence: 99.8% | State: {analysisResult.alertnessLevel}<br/></>}
+                {isCapturing && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> Stream: ACTIVE_RAW_INPUT<br/></>}
+                {analysisResult && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> State: {analysisResult.alertnessLevel}<br/></>}
+                {!currentLandmarks && isCapturing && <><span className="text-red-400">[{new Date().toLocaleTimeString()}]</span> WARN: Face lost<br/></>}
               </div>
             </div>
           </div>
@@ -229,7 +258,7 @@ export default function VigilantDriveApp() {
               <ShieldAlert className="h-4 w-4" /> Safety Protocol
             </h4>
             <p className="text-base text-slate-600 leading-relaxed font-medium">
-              Immediate action: If alert triggers, safely pull over. This system uses a synthetic high-frequency alarm designed to be audible over road noise. Ensure system volume is at 100%.
+              Immediate action: If alert triggers, safely pull over. This system uses a synthetic high-frequency alarm. Ensure system volume is at 100% and camera has a clear view of your face.
             </p>
           </div>
         </div>

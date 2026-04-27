@@ -24,6 +24,7 @@ const RealtimeDrowsinessAnalysisInputSchema = z.object({
     left: z.number().describe('Blink score for left eye (0-1).'),
     right: z.number().describe('Blink score for right eye (0-1).'),
   }).optional().describe('Direct blendshape blink scores from MediaPipe.'),
+  sensitivity: z.number().optional().default(50).describe('Sensitivity percentage (0-100) to adjust thresholds.'),
 });
 export type RealtimeDrowsinessAnalysisInput = z.infer<typeof RealtimeDrowsinessAnalysisInputSchema>;
 
@@ -102,7 +103,7 @@ const realtimeDrowsinessAnalysisFlow = ai.defineFlow(
     outputSchema: RealtimeDrowsinessAnalysisOutputSchema,
   },
   async (input) => {
-    const { faceLandmarks, blinkScores } = input;
+    const { faceLandmarks, blinkScores, sensitivity = 50 } = input;
     if (!faceLandmarks || faceLandmarks.length < 478) {
       return { alertnessLevel: 'Awake', ear: 0, headPoseStatus: 'Forward', warningMessage: 'No face detected.' };
     }
@@ -110,17 +111,23 @@ const realtimeDrowsinessAnalysisFlow = ai.defineFlow(
     const ear = calculateEAR(faceLandmarks);
     const headPoseStatus = estimateHeadPose(faceLandmarks);
     
-    // Use blendshapes (blinkScores) if available, they are much more accurate than EAR
+    // Scale thresholds based on sensitivity (0-100)
+    // High sensitivity (100) -> Lower threshold (reacts sooner)
+    // Low sensitivity (0) -> Higher threshold (needs more definitive closure)
+    const sensFactor = sensitivity / 100;
+    const extremeThreshold = 0.90 - (sensFactor * 0.15); // 0.75 to 0.90
+    const drowsyThreshold = 0.65 - (sensFactor * 0.25); // 0.40 to 0.65
+    const earThreshold = 0.18 + (sensFactor * 0.06); // 0.18 to 0.24
+
     const avgBlink = blinkScores ? (blinkScores.left + blinkScores.right) / 2 : (ear < 0.22 ? 1 : 0);
     
     let alertnessLevel: RealtimeDrowsinessAnalysisOutput['alertnessLevel'] = 'Awake';
     let warningMessage: string | null = null;
 
-    // Detection Logic: Priority to Blink Scores
-    if (avgBlink > 0.85 || ear < 0.18) {
+    if (avgBlink > extremeThreshold || ear < (earThreshold - 0.05)) {
       alertnessLevel = 'Extremely Drowsy';
       warningMessage = 'EYES CLOSED! STOP DRIVING IMMEDIATELY!';
-    } else if (avgBlink > 0.5 || ear < 0.24) {
+    } else if (avgBlink > drowsyThreshold || ear < earThreshold) {
       alertnessLevel = 'Drowsy';
       warningMessage = 'High drowsiness detected. Pull over safely.';
     } else if (headPoseStatus === 'Looking Down' || headPoseStatus !== 'Forward') {
