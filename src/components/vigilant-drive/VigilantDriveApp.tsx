@@ -64,12 +64,12 @@ export default function VigilantDriveApp() {
 
   const startCamera = async () => {
     try {
-      // Mobile-friendly constraints: face front, flexible resolution
       const constraints = {
         video: {
           facingMode: 'user',
           width: { ideal: 640 },
-          height: { ideal: 480 }
+          height: { ideal: 480 },
+          frameRate: { ideal: 30 }
         }
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -107,7 +107,6 @@ export default function VigilantDriveApp() {
 
     const timestamp = performance.now();
     
-    // Ensure video is actually playing and has data
     if (videoRef.current.readyState >= 2) {
       const results = landmarkerRef.current.detectForVideo(videoRef.current, timestamp);
 
@@ -119,8 +118,7 @@ export default function VigilantDriveApp() {
         const leftBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkLeft')?.score || 0;
         const rightBlink = blendshapes.find(c => c.categoryName === 'eyeBlinkRight')?.score || 0;
 
-        // Throttled server call for analysis
-        if (timestamp - lastProcessedTime.current > 150) {
+        if (timestamp - lastProcessedTime.current > 100) {
           lastProcessedTime.current = timestamp;
           const analysis = await realtimeDrowsinessAnalysis({ 
             faceLandmarks: landmarks,
@@ -130,9 +128,9 @@ export default function VigilantDriveApp() {
           if (isLooping.current) setAnalysisResult(analysis);
         }
       } else {
-        // Face lost - reset state immediately
+        // Face lost - explicitly set state to silence alarm and update UI
         setCurrentLandmarks(null);
-        if (timestamp - lastProcessedTime.current > 150) {
+        if (timestamp - lastProcessedTime.current > 100) {
           setAnalysisResult({ 
             alertnessLevel: 'Awake', 
             ear: 0, 
@@ -211,7 +209,7 @@ export default function VigilantDriveApp() {
                 className="py-4"
               />
               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <Info className="h-4 w-4 text-primary" /> Higher sensitivity reacts faster to minor eye closures.
+                <Info className="h-4 w-4 text-primary" /> Adjust for spectacles or low-light conditions.
               </p>
             </div>
             <div className="space-y-4">
@@ -258,7 +256,7 @@ export default function VigilantDriveApp() {
               <ShieldAlert className="h-4 w-4" /> Safety Protocol
             </h4>
             <p className="text-base text-slate-600 leading-relaxed font-medium">
-              Immediate action: If alert triggers, safely pull over. This system uses a synthetic high-frequency alarm. Ensure system volume is at 100% and camera has a clear view of your face.
+              Immediate action: If alert triggers, safely pull over. This system uses high-frequency neural blendshapes for spectacles compatibility. Ensure system volume is at 100%.
             </p>
           </div>
         </div>

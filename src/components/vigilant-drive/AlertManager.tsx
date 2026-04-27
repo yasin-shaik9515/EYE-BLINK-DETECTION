@@ -24,12 +24,16 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const initAudio = useCallback(() => {
+    if (typeof window === 'undefined') return;
     if (!audioCtx.current) {
-      audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      gainNode.current = audioCtx.current.createGain();
-      gainNode.current.connect(audioCtx.current.destination);
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx.current = new AudioContextClass();
+        gainNode.current = audioCtx.current.createGain();
+        gainNode.current.connect(audioCtx.current.destination);
+      }
     }
-    if (audioCtx.current.state === 'suspended') {
+    if (audioCtx.current && audioCtx.current.state === 'suspended') {
       audioCtx.current.resume();
     }
   }, []);
@@ -58,6 +62,7 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
     const gain = gainNode.current;
 
     const pulse = () => {
+      if (ctx.state === 'suspended') ctx.resume();
       const osc = ctx.createOscillator();
       const localGain = ctx.createGain();
       
@@ -81,8 +86,9 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
   }, [initAudio, stopSound]);
 
   useEffect(() => {
-    // FORCE STOP logic: Ensure siren stops if system is disabled, muted, face is lost, or user is awake
-    const shouldStop = !isEnabled || muted || alertnessLevel === 'Awake' || warningMessage === 'No face detected.' || warningMessage === 'Face not detected';
+    // CRITICAL: Stop buzzer immediately if face is lost, system disabled, or user is awake
+    const noFaceDetected = warningMessage === 'No face detected.' || warningMessage === 'Face not detected' || !warningMessage;
+    const shouldStop = !isEnabled || muted || alertnessLevel === 'Awake' || noFaceDetected;
     
     if (shouldStop) {
       stopSound();

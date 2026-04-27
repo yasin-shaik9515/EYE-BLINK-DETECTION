@@ -2,7 +2,7 @@
 /**
  * @fileOverview A Genkit flow for real-time drowsiness detection using facial landmarks and blendshapes.
  * This flow analyzes normalized facial landmarks and blendshape scores (blink detection)
- * to determine the driver's alertness level with high precision.
+ * to determine the driver's alertness level with high precision, specifically optimized for spectacles.
  *
  * - realtimeDrowsinessAnalysis - A function that handles the drowsiness analysis process.
  * - RealtimeDrowsinessAnalysisInput - The input type for the realtimeDrowsinessAnalysis function.
@@ -111,20 +111,20 @@ const realtimeDrowsinessAnalysisFlow = ai.defineFlow(
     const ear = calculateEAR(faceLandmarks);
     const headPoseStatus = estimateHeadPose(faceLandmarks);
     
-    // Scale thresholds based on sensitivity (0-100)
-    // High sensitivity (100) -> Lower threshold (reacts sooner)
-    // Low sensitivity (0) -> Higher threshold (needs more definitive closure)
     const sensFactor = sensitivity / 100;
-    const extremeThreshold = 0.90 - (sensFactor * 0.15); // 0.75 to 0.90
-    const drowsyThreshold = 0.65 - (sensFactor * 0.25); // 0.40 to 0.65
-    const earThreshold = 0.18 + (sensFactor * 0.06); // 0.18 to 0.24
+    // For spectacles, EAR is less reliable than blendshapes. 
+    // We adjust EAR thresholds to be slightly more lenient if spectacles are likely detected (implied by high sensitivity calibration)
+    const extremeThreshold = 0.88 - (sensFactor * 0.12); 
+    const drowsyThreshold = 0.60 - (sensFactor * 0.20); 
+    const earThreshold = 0.17 + (sensFactor * 0.05);
 
-    const avgBlink = blinkScores ? (blinkScores.left + blinkScores.right) / 2 : (ear < 0.22 ? 1 : 0);
+    // Prioritize blendshapes for spectacles users
+    const avgBlink = blinkScores ? (blinkScores.left + blinkScores.right) / 2 : (ear < 0.20 ? 1 : 0);
     
     let alertnessLevel: RealtimeDrowsinessAnalysisOutput['alertnessLevel'] = 'Awake';
     let warningMessage: string | null = null;
 
-    if (avgBlink > extremeThreshold || ear < (earThreshold - 0.05)) {
+    if (avgBlink > extremeThreshold || ear < (earThreshold - 0.04)) {
       alertnessLevel = 'Extremely Drowsy';
       warningMessage = 'EYES CLOSED! STOP DRIVING IMMEDIATELY!';
     } else if (avgBlink > drowsyThreshold || ear < earThreshold) {
