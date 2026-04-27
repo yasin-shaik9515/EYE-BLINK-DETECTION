@@ -58,7 +58,7 @@ export const StatusMonitor: React.FC<StatusMonitorProps> = ({ data, isCapturing 
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold font-headline">Healthy</div>
-          <p className="text-xs text-muted-foreground">VigilantDrive v1.0.4</p>
+          <p className="text-xs text-muted-foreground">EYE BLINK DETECTION v1.0.4</p>
         </CardContent>
       </Card>
     </div>

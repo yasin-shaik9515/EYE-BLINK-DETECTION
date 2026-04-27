@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -134,7 +133,7 @@ export default function VigilantDriveApp() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-primary font-headline tracking-tighter flex items-center gap-3">
-            VigilantDrive <span className="text-secondary text-xs font-bold px-3 py-1 bg-secondary/10 border border-secondary/20 rounded-full animate-pulse uppercase">Active AI</span>
+            EYE BLINK DETECTION <span className="text-secondary text-xs font-bold px-3 py-1 bg-secondary/10 border border-secondary/20 rounded-full animate-pulse uppercase">Active AI</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">Next-gen driver drowsiness detection with neural vision.</p>
         </div>

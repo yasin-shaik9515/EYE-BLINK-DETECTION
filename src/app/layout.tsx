@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'VigilantDrive | AI-Powered Driver Monitoring',
+  title: 'EYE BLINK DETECTION | AI-Powered Driver Monitoring',
   description: 'Real-time driver drowsiness detection using advanced facial landmark analysis.',
 };
 

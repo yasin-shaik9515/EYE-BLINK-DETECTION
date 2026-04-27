@@ -13,8 +13,8 @@ export default function Home() {
       <nav className="border-b bg-white/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">V</div>
-            <span className="font-headline font-bold text-xl tracking-tight">VigilantDrive</span>
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">E</div>
+            <span className="font-headline font-bold text-xl tracking-tight">EYE BLINK DETECTION</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#" className="hover:text-primary transition-colors">Features</a>
@@ -77,14 +77,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">V</div>
-              <span className="font-headline font-bold text-2xl tracking-tight">VigilantDrive</span>
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">E</div>
+              <span className="font-headline font-bold text-2xl tracking-tight">EYE BLINK DETECTION</span>
             </div>
             <p className="text-slate-400 max-w-sm mb-6">
               Empowering drivers with advanced AI safety tools. Built with MediaPipe, Genkit, and next-generation vision models.
             </p>
             <p className="text-xs text-slate-500">
-              © 2024 VigilantDrive Safety Systems. All rights reserved.
+              © 2024 EYE BLINK DETECTION Safety Systems. All rights reserved.
             </p>
           </div>
           <div>
