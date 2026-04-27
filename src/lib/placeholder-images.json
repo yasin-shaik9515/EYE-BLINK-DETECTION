@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "app-hero",
+      "description": "Smart driving assistant dashboard",
+      "imageUrl": "https://picsum.photos/seed/vigilant1/1200/600",
+      "imageHint": "driving assistant"
+    },
+    {
+      "id": "driver-monitoring",
+      "description": "Infrared driver monitoring system visualization",
+      "imageUrl": "https://picsum.photos/seed/vigilant2/800/600",
+      "imageHint": "face monitoring"
+    }
+  ]
 }
