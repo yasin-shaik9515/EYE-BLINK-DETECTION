@@ -21,11 +21,14 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Basic beep sound generator or static file
-    // Using a base64 encoded simple beep sound
-    const beep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YV9vT18A";
-    audioRef.current = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+    // Use an aggressive, continuous alarm sound for extreme drowsiness
+    const alarmSound = 'https://actions.google.com/sounds/v1/alarms/emergency_it_is_done.ogg';
+    audioRef.current = new Audio(alarmSound);
     audioRef.current.loop = true;
+    
+    return () => {
+      audioRef.current?.pause();
+    };
   }, []);
 
   useEffect(() => {
@@ -34,10 +37,14 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
       return;
     }
 
+    // Play continuously if Drowsy or Extremely Drowsy
     if (alertnessLevel === 'Drowsy' || alertnessLevel === 'Extremely Drowsy') {
+      // Faster playback for extreme drowsiness to increase urgency
+      audioRef.current.playbackRate = alertnessLevel === 'Extremely Drowsy' ? 1.5 : 1.0;
       audioRef.current.play().catch(e => console.warn("Audio play failed:", e));
     } else {
       audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
   }, [alertnessLevel, isEnabled, muted]);
 
@@ -46,7 +53,7 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
   const getAlertColor = () => {
     switch (alertnessLevel) {
       case 'Extremely Drowsy': return 'bg-destructive text-destructive-foreground';
-      case 'Drowsy': return 'bg-orange-500 text-white';
+      case 'Drowsy': return 'bg-orange-600 text-white';
       case 'Slightly Drowsy': return 'bg-yellow-500 text-white';
       default: return 'bg-primary text-primary-foreground';
     }
@@ -54,26 +61,26 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-4">
-      {warningMessage && (
-        <Card className={cn("w-80 shadow-2xl border-none animate-in slide-in-from-right-full", getAlertColor(), alertnessLevel.includes('Drowsy') && "alert-pulse")}>
+      {(warningMessage && (alertnessLevel !== 'Awake' || warningMessage === 'Face not detected')) && (
+        <Card className={cn("w-80 shadow-2xl border-none animate-in slide-in-from-right-full duration-300", getAlertColor(), alertnessLevel === 'Extremely Drowsy' && "alert-pulse")}>
           <CardContent className="p-4 flex items-center gap-3">
-            <AlertCircle className="h-6 w-6 shrink-0" />
+            <AlertCircle className={cn("h-8 w-8 shrink-0", alertnessLevel === 'Extremely Drowsy' && "animate-bounce")} />
             <div>
-              <p className="font-bold text-sm uppercase tracking-wider">{alertnessLevel}</p>
-              <p className="text-sm opacity-90">{warningMessage}</p>
+              <p className="font-black text-xs uppercase tracking-widest mb-1">{alertnessLevel}</p>
+              <p className="text-sm font-medium leading-tight">{warningMessage}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {(alertnessLevel === 'Drowsy' || alertnessLevel === 'Extremely Drowsy') && (
+      {(alertnessLevel.includes('Drowsy')) && (
         <Button
           variant="secondary"
           size="icon"
-          className="rounded-full shadow-lg self-end h-12 w-12"
+          className="rounded-full shadow-lg self-end h-14 w-14 hover:scale-110 transition-transform"
           onClick={() => setMuted(!muted)}
         >
-          {muted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
+          {muted ? <VolumeX className="h-6 w-6 text-destructive" /> : <Volume2 className="h-6 w-6 text-primary" />}
         </Button>
       )}
     </div>
