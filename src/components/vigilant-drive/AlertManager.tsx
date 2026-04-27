@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -67,28 +68,33 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
       const localGain = ctx.createGain();
       
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(intensity === 'critical' ? 880 : 440, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(intensity === 'critical' ? 1760 : 880, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(intensity === 'critical' ? 950 : 480, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(intensity === 'critical' ? 1900 : 960, ctx.currentTime + 0.1);
       
       osc.connect(localGain);
       localGain.connect(gain);
       
       localGain.gain.setValueAtTime(0, ctx.currentTime);
-      localGain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + 0.05);
-      localGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+      localGain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.05);
+      localGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.15);
       
       osc.start();
-      osc.stop(ctx.currentTime + 0.25);
+      osc.stop(ctx.currentTime + 0.2);
     };
 
     pulse();
-    intervalRef.current = setInterval(pulse, intensity === 'critical' ? 200 : 500);
+    intervalRef.current = setInterval(pulse, intensity === 'critical' ? 180 : 450);
   }, [initAudio, stopSound]);
 
   useEffect(() => {
-    // CRITICAL: Stop buzzer immediately if face is lost, system disabled, or user is awake
-    const noFaceDetected = warningMessage === 'No face detected.' || warningMessage === 'Face not detected' || !warningMessage;
-    const shouldStop = !isEnabled || muted || alertnessLevel === 'Awake' || noFaceDetected;
+    // CRITICAL: Stop sound immediately if:
+    // 1. System disabled
+    // 2. User muted
+    // 3. Status is 'Awake'
+    // 4. Face is lost (warning contains 'not detected')
+    // 5. No warning message at all
+    const isFaceLost = warningMessage?.toLowerCase().includes('not detected') || !warningMessage;
+    const shouldStop = !isEnabled || muted || alertnessLevel === 'Awake' || isFaceLost;
     
     if (shouldStop) {
       stopSound();
@@ -140,14 +146,14 @@ export const AlertManager: React.FC<AlertManagerProps> = ({
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full bg-white shadow-lg h-10 px-4 font-bold text-xs"
+            className="rounded-full bg-white shadow-lg h-10 px-4 font-bold text-xs border-primary/20 hover:bg-slate-50"
             onClick={() => {
               initAudio();
               playSiren('high');
               setTimeout(stopSound, 1000);
             }}
           >
-            <BellRing className="h-4 w-4 mr-2" /> TEST ALARM
+            <BellRing className="h-4 w-4 mr-2 text-primary" /> TEST ALARM
           </Button>
           
           {(alertnessLevel.includes('Drowsy')) && (
