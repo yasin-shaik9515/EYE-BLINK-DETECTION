@@ -12,5 +12,8 @@ runConfig:
 
 # Next.js 15 requires specific environment handling in some cases
 env:
-  - name: NODE_ENV
+  - variable: NODE_ENV
     value: production
+    availability:
+      - BUILD
+      - RUNTIME

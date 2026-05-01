@@ -1,9 +1,9 @@
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyCny1ZFsBIM4gs4ERQVV46eYwZDzxf0lfo",
-  authDomain: "praesentia-lite.firebaseapp.com",
-  projectId: "praesentia-lite",
-  storageBucket: "praesentia-lite.firebasestorage.app",
-  messagingSenderId: "403634286912",
-  appId: "1:403634286912:web:0231da73ef077fe26e0aa5"
+  apiKey: "AIzaSyBTH2x4LwZu6wXu1qqj7JKp9jW7LM0G1mg",
+  authDomain: "studio-9505701348-70277.firebaseapp.com",
+  projectId: "studio-9505701348-70277",
+  storageBucket: "studio-9505701348-70277.firebasestorage.app",
+  messagingSenderId: "348659128627",
+  appId: "1:348659128627:web:1e15884c7a0cf53de64646"
 };
