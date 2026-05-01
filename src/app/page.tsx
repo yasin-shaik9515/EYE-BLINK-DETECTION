@@ -1,5 +1,11 @@
+
 import VigilantDriveApp from '@/components/vigilant-drive/VigilantDriveApp';
 import { Shield, Eye, Bell, Activity, Lock, Smartphone, HeartPulse, Info } from 'lucide-react';
+
+/**
+ * EYE BLINK DETECTION - Driver Safety Monitoring
+ * Metadata Version: 1.1.2
+ */
 
 export default function Home() {
   return (

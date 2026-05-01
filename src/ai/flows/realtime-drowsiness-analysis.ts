@@ -2,11 +2,7 @@
 'use server';
 /**
  * @fileOverview A Genkit flow for real-time drowsiness detection using facial landmarks and blendshapes.
- * Optimized to reduce false positives and improve detection for users with spectacles.
- *
- * - realtimeDrowsinessAnalysis - A function that handles the drowsiness analysis process.
- * - RealtimeDrowsinessAnalysisInput - The input type for the realtimeDrowsinessAnalysis function.
- * - RealtimeDrowsinessAnalysisOutput - The return type for the realtimeDrowsinessAnalysis function.
+ * Optimized for high accuracy and minimal false positives for users with spectacles.
  */
 
 import {ai} from '@/ai/genkit';
@@ -42,7 +38,6 @@ function euclideanDistance(p1: {x: number; y: number}, p2: {x: number; y: number
 
 function calculateEAR(landmarks: z.infer<typeof NormalizedLandmarkSchema>[]): number {
   if (landmarks.length < 478) return 0;
-  // Eye indices for MediaPipe
   const LE_OUTER_CORNER = 33;
   const LE_INNER_CORNER = 133;
   const LE_UPPER_INNER = 160;
@@ -89,15 +84,15 @@ function estimateHeadPose(landmarks: z.infer<typeof NormalizedLandmarkSchema>[])
   const mouthRight = landmarks[291];
 
   const eye_y_diff = leftEye.y - rightEye.y;
-  if (eye_y_diff > 0.025) return 'Tilted Right';
-  if (eye_y_diff < -0.025) return 'Tilted Left';
+  if (eye_y_diff > 0.03) return 'Tilted Right';
+  if (eye_y_diff < -0.03) return 'Tilted Left';
 
   const mid_eye_y = (leftEye.y + rightEye.y) / 2;
   const mid_mouth_y = (mouthLeft.y + mouthRight.y) / 2;
   const head_center_y = (mid_eye_y + mid_mouth_y) / 2;
 
-  if (nose.y > head_center_y + 0.06) return 'Looking Down';
-  if (nose.y < head_center_y - 0.06) return 'Looking Up';
+  if (nose.y > head_center_y + 0.07) return 'Looking Down';
+  if (nose.y < head_center_y - 0.07) return 'Looking Up';
   return 'Forward';
 }
 
@@ -115,38 +110,31 @@ const realtimeDrowsinessAnalysisFlow = ai.defineFlow(
 
     const ear = calculateEAR(faceLandmarks);
     const headPoseStatus = estimateHeadPose(faceLandmarks);
-    
-    // Convert sensitivity to a normalized factor (0.5 is default center)
     const sensFactor = sensitivity / 100;
     
-    /**
-     * THRESHOLD CALIBRATION
-     * We've made these more conservative to prevent false positives for spectacles.
-     * High sensitivity (100) = Lower thresholds (easier to trigger)
-     * Low sensitivity (0) = Higher thresholds (harder to trigger)
-     */
+    // ADJUSTED THRESHOLDS FOR BETTER SPECTACLES PERFORMANCE
+    // Higher blendshape score = more closed.
+    // Lower EAR score = more closed.
     
-    // For blendshapes (0.0 open, 1.0 closed)
-    const extremeThreshold = 0.96 - (sensFactor * 0.10); // Default ~0.91
-    const drowsyThreshold = 0.82 - (sensFactor * 0.15); // Default ~0.74
+    // We increase these to reduce false positives
+    const extremeThreshold = 0.98 - (sensFactor * 0.08); // More rigorous for critical alert
+    const drowsyThreshold = 0.88 - (sensFactor * 0.12); // Higher threshold to avoid false "Drowsy"
     
-    // For EAR (higher is open, lower is closed)
-    // Default Awake EAR is usually 0.25-0.30. Closed is < 0.15
-    const earThreshold = 0.14 + (sensFactor * 0.06); // Default ~0.17
+    // EAR threshold (lower is more closed)
+    const earThreshold = 0.12 + (sensFactor * 0.05); 
 
-    const avgBlink = blinkScores ? (blinkScores.left + blinkScores.right) / 2 : (ear < 0.18 ? 0.9 : 0.1);
+    const avgBlink = blinkScores ? (blinkScores.left + blinkScores.right) / 2 : (ear < 0.15 ? 0.95 : 0.05);
     
     let alertnessLevel: RealtimeDrowsinessAnalysisOutput['alertnessLevel'] = 'Awake';
     let warningMessage: string | null = null;
 
-    // Detection Logic Priority: Blendshapes > EAR > Head Pose
-    if (avgBlink > extremeThreshold || ear < (earThreshold - 0.04)) {
+    if (avgBlink > extremeThreshold || ear < (earThreshold - 0.03)) {
       alertnessLevel = 'Extremely Drowsy';
       warningMessage = 'EYES CLOSED! STOP DRIVING IMMEDIATELY!';
     } else if (avgBlink > drowsyThreshold || ear < earThreshold) {
       alertnessLevel = 'Drowsy';
       warningMessage = 'Drowsiness detected. Please stay alert.';
-    } else if (headPoseStatus === 'Looking Down' || (headPoseStatus !== 'Forward' && ear < earThreshold + 0.02)) {
+    } else if (headPoseStatus === 'Looking Down' && ear < (earThreshold + 0.05)) {
       alertnessLevel = 'Slightly Drowsy';
       warningMessage = 'Attention drifting. Focus on the road.';
     } else {
