@@ -1,0 +1,25 @@
+
+{
+  "entities": {
+    "UserSession": {
+      "title": "User Session",
+      "description": "Information about a user's monitoring session.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "alertCount": { "type": "number" }
+      },
+      "required": ["userId", "startTime"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/sessions/{sessionId}": {
+      "schema": "#/backend/entities/UserSession",
+      "description": "Collection of monitoring sessions."
+    }
+  }
+}
