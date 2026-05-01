@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -18,6 +19,7 @@ const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmark
 export default function VigilantDriveApp() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [analysisResult, setAnalysisResult] = useState<RealtimeDrowsinessAnalysisOutput | null>(null);
   const [sensitivity, setSensitivity] = useState([50]);
   const [showSettings, setShowSettings] = useState(false);
@@ -32,7 +34,6 @@ export default function VigilantDriveApp() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Avoid hydration mismatch by setting time after mount
     setMountTime(new Date().toLocaleTimeString());
     
     async function init() {
@@ -77,6 +78,8 @@ export default function VigilantDriveApp() {
         }
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setHasCameraPermission(true);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
@@ -88,9 +91,10 @@ export default function VigilantDriveApp() {
       }
     } catch (err) {
       console.error(err);
+      setHasCameraPermission(false);
       toast({
         title: "Camera Access Denied",
-        description: "Please allow camera permissions to enable driver monitoring.",
+        description: "Please enable camera permissions in your browser settings to use this app.",
         variant: "destructive",
       });
     }
@@ -176,7 +180,16 @@ export default function VigilantDriveApp() {
         </div>
       </header>
 
-      {!isCapturing && isInitialized && (
+      {hasCameraPermission === false && (
+        <Alert variant="destructive" className="animate-in fade-in duration-500">
+          <AlertTitle>Camera Access Required</AlertTitle>
+          <AlertDescription>
+            Please allow camera access in your browser settings to use the driver monitoring features.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isCapturing && isInitialized && hasCameraPermission !== false && (
         <Alert className="bg-primary/5 border-primary/20">
           <Volume2 className="h-4 w-4" />
           <AlertTitle className="font-bold">System Check Required</AlertTitle>
