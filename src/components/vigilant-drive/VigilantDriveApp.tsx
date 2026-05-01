@@ -22,6 +22,7 @@ export default function VigilantDriveApp() {
   const [sensitivity, setSensitivity] = useState([50]);
   const [showSettings, setShowSettings] = useState(false);
   const [currentLandmarks, setCurrentLandmarks] = useState<any[] | null>(null);
+  const [mountTime, setMountTime] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
@@ -31,6 +32,9 @@ export default function VigilantDriveApp() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Avoid hydration mismatch by setting time after mount
+    setMountTime(new Date().toLocaleTimeString());
+    
     async function init() {
       try {
         const filesetResolver = await FilesetResolver.forVisionTasks(
@@ -128,7 +132,6 @@ export default function VigilantDriveApp() {
           if (isLooping.current) setAnalysisResult(analysis);
         }
       } else {
-        // Face lost - explicitly set state to silence alarm and update UI
         setCurrentLandmarks(null);
         if (timestamp - lastProcessedTime.current > 100) {
           setAnalysisResult({ 
@@ -146,13 +149,6 @@ export default function VigilantDriveApp() {
       requestRef.current = requestAnimationFrame(processFrame);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      isLooping.current = false;
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, []);
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto px-4 py-12 pb-32">
@@ -215,11 +211,11 @@ export default function VigilantDriveApp() {
             <div className="space-y-4">
               <Label className="text-base font-bold">Neural Core Logs</Label>
               <div className="h-32 bg-slate-950 rounded-2xl p-4 text-[11px] font-mono overflow-y-auto text-emerald-400 border border-emerald-900/30">
-                <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> Core initialized (Delegate: GPU)<br/>
-                {isInitialized && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> FaceMesh: 478_LANDMARKS_ACTIVE<br/></>}
-                {isCapturing && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> Stream: ACTIVE_RAW_INPUT<br/></>}
-                {analysisResult && <><span className="opacity-50">[{new Date().toLocaleTimeString()}]</span> State: {analysisResult.alertnessLevel}<br/></>}
-                {!currentLandmarks && isCapturing && <><span className="text-red-400">[{new Date().toLocaleTimeString()}]</span> WARN: Face lost<br/></>}
+                {mountTime && <><span className="opacity-50">[{mountTime}]</span> Core initialized (Delegate: GPU)<br/></>}
+                {isInitialized && mountTime && <><span className="opacity-50">[{mountTime}]</span> FaceMesh: 478_LANDMARKS_ACTIVE<br/></>}
+                {isCapturing && mountTime && <><span className="opacity-50">[{mountTime}]</span> Stream: ACTIVE_RAW_INPUT<br/></>}
+                {analysisResult && mountTime && <><span className="opacity-50">[{mountTime}]</span> State: {analysisResult.alertnessLevel}<br/></>}
+                {!currentLandmarks && isCapturing && mountTime && <><span className="text-red-400">[{mountTime}]</span> WARN: Face lost<br/></>}
               </div>
             </div>
           </div>
