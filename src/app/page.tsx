@@ -1,24 +1,11 @@
-
 import VigilantDriveApp from '@/components/vigilant-drive/VigilantDriveApp';
 import { Shield, Eye, Bell, Activity, Lock, Smartphone, HeartPulse, Info } from 'lucide-react';
 
 /**
  * EYE BLINK DETECTION - Driver Safety Monitoring
  * Metadata Version: 1.1.3
+ * Deployment Refresh Trigger
  */
-
-const Logo = ({ className = "w-8 h-8" }: { className?: string }) => (
-  <div className={className + " bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden"}>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white w-2/3 h-2/3">
-      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 5V3" />
-      <path d="M12 21v-2" />
-      <path d="M19.5 12h2" />
-      <path d="M2.5 12h2" />
-    </svg>
-  </div>
-);
 
 export default function Home() {
   return (
@@ -31,8 +18,8 @@ export default function Home() {
 
       <nav className="border-b bg-white/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo className="w-10 h-10" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">E</div>
             <span className="font-headline font-bold text-xl tracking-tight">EYE BLINK DETECTION</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -184,7 +171,7 @@ export default function Home() {
         {/* About Section */}
         <section id="about" className="bg-slate-900 text-white py-24">
           <div className="max-w-7xl mx-auto px-4 flex flex-col items-center text-center">
-            <Logo className="w-20 h-20 mb-8 rounded-3xl" />
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white font-black text-3xl mb-8">E</div>
             <h2 className="text-4xl font-black font-headline mb-6">Our Mission</h2>
             <p className="text-slate-400 max-w-3xl text-xl leading-relaxed">
               EYE BLINK DETECTION was founded with a single goal: to reduce road accidents caused by driver fatigue. By combining advanced neural networks with the ubiquity of modern smartphones, we provide a life-saving safety layer that is accessible to every driver on the planet, regardless of their vehicle's age or technology.
@@ -204,8 +191,8 @@ export default function Home() {
       <footer className="bg-slate-950 text-white py-12 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-2">
-            <div className="flex items-center gap-3 mb-6">
-              <Logo className="w-10 h-10" />
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">E</div>
               <span className="font-headline font-bold text-2xl tracking-tight">EYE BLINK DETECTION</span>
             </div>
             <p className="text-slate-400 max-w-sm mb-6">
