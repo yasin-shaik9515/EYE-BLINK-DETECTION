@@ -1,10 +1,10 @@
 import VigilantDriveApp from '@/components/vigilant-drive/VigilantDriveApp';
 import { Shield, Eye, Bell, Activity, Lock, Smartphone, HeartPulse, Info } from 'lucide-react';
+import Image from 'next/image';
 
 /**
  * EYE BLINK DETECTION - Driver Safety Monitoring
- * Metadata Version: 1.1.3
- * Deployment Refresh Trigger
+ * Branding: Updated to use project favicon as logo
  */
 
 export default function Home() {
@@ -19,7 +19,9 @@ export default function Home() {
       <nav className="border-b bg-white/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">E</div>
+            <div className="w-8 h-8 relative overflow-hidden rounded-lg">
+              <Image src="/favicon.ico" alt="Logo" width={32} height={32} />
+            </div>
             <span className="font-headline font-bold text-xl tracking-tight">EYE BLINK DETECTION</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -171,7 +173,9 @@ export default function Home() {
         {/* About Section */}
         <section id="about" className="bg-slate-900 text-white py-24">
           <div className="max-w-7xl mx-auto px-4 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white font-black text-3xl mb-8">E</div>
+            <div className="w-16 h-16 relative overflow-hidden rounded-2xl mb-8">
+              <Image src="/favicon.ico" alt="Logo Large" width={64} height={64} />
+            </div>
             <h2 className="text-4xl font-black font-headline mb-6">Our Mission</h2>
             <p className="text-slate-400 max-w-3xl text-xl leading-relaxed">
               EYE BLINK DETECTION was founded with a single goal: to reduce road accidents caused by driver fatigue. By combining advanced neural networks with the ubiquity of modern smartphones, we provide a life-saving safety layer that is accessible to every driver on the planet, regardless of their vehicle's age or technology.
@@ -192,7 +196,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xl">E</div>
+              <div className="w-8 h-8 relative overflow-hidden rounded-lg">
+                <Image src="/favicon.ico" alt="Footer Logo" width={32} height={32} />
+              </div>
               <span className="font-headline font-bold text-2xl tracking-tight">EYE BLINK DETECTION</span>
             </div>
             <p className="text-slate-400 max-w-sm mb-6">

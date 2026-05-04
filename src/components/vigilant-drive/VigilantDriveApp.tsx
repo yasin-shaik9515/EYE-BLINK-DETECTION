@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -13,6 +12,7 @@ import { StatusMonitor } from './StatusMonitor';
 import { realtimeDrowsinessAnalysis, RealtimeDrowsinessAnalysisOutput } from '@/ai/flows/realtime-drowsiness-analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Image from 'next/image';
 
 const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
@@ -34,7 +34,9 @@ export default function VigilantDriveApp() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setMountTime(new Date().toLocaleTimeString());
+    // Avoid hydration mismatch by setting time in useEffect
+    const now = new Date();
+    setMountTime(now.toLocaleTimeString());
     
     async function init() {
       try {
@@ -159,6 +161,9 @@ export default function VigilantDriveApp() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-primary font-headline tracking-tighter flex items-center gap-3">
+            <div className="w-10 h-10 relative overflow-hidden shrink-0">
+              <Image src="/favicon.ico" alt="App Logo" width={40} height={40} />
+            </div>
             EYE BLINK DETECTION <span className="text-secondary text-xs font-bold px-3 py-1 bg-secondary/10 border border-secondary/20 rounded-full animate-pulse uppercase">Active AI</span>
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">Next-gen driver drowsiness detection with neural vision.</p>
